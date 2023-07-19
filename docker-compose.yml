@@ -1,0 +1,42 @@
+version: '3.9'
+services:
+  mumble:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - DB_NAME=${DB_NAME}
+        - DB_DRIVER=${DB_DRIVER}
+        - DB_USER=${DB_USER}
+        - DB_PASSWORD=${DB_PASSWORD}
+        - DB_HOST=${DB_HOST}
+        - DB_PORT=${DB_PORT}
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    env_file:
+      - .env
+    ports:
+      - 64738:64738
+      - 64738:64738/udp
+      - 50051:50051
+    volumes:
+      - mumble_data:/data
+
+  mysql:
+    image: mysql:8
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mumble_data:
+    name: mumble_data
+  mysql_data:
+    name: mysql_data
+
+networks:
+  default:
+    name: mumble
