@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as build
 
 # needed to install tzdata in disco
 ENV DEBIAN_FRONTEND=noninteractive
@@ -30,10 +30,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 COPY . /root/mumble
 WORKDIR /root/mumble/build
 
-RUN cmake -Dclient=OFF -DCMAKE_BUILD_TYPE=Release -Dgrpc=ON ..
+RUN cmake -Dclient=OFF -DCMAKE_BUILD_TYPE=Release -Dgrpc=ON -Dplugins=OFF ..
 RUN make -j $(nproc)
 
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as release
 
 RUN adduser murmurd
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -53,18 +53,20 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 	ca-certificates \
 	&& rm -rf /var/lib/apt/lists/*
 
-COPY --from=0 /root/mumble/build/mumble-server /usr/bin/murmurd
-COPY --from=0 /root/mumble/build/mumble-server.ini /etc/murmurd/murmurd.ini
+COPY --from=build /root/mumble/build/mumble-server /usr/bin/murmurd
+COPY --from=build /root/mumble/build/mumble-server.ini /etc/murmurd/murmurd.ini
 
-ARG DB_NAME DB_DRIVER DB_USER DB_PASSWORD DB_HOST DB_PORT
+ARG DB_NAME DB_DRIVER DB_USER DB_PASSWORD DB_HOST DB_PORT SERVER_PASSWORD SUPER_USER_PASSWORD
 
 RUN sed -i 's/database=/database='"${DB_NAME}"'/' /etc/murmurd/murmurd.ini \
-    && sed -i 's/^;dbDriver=QMYSQL/dbDriver='"${DB_DRIVER}"'/' /etc/murmurd/murmurd.ini \
-    && sed -i 's/^;dbUsername=/dbUsername='"${DB_USER}"'/' /etc/murmurd/murmurd.ini \
-    && sed -i 's/^;dbPassword=/dbPassword='"${DB_PASSWORD}"'/' /etc/murmurd/murmurd.ini \
-    && sed -i 's/^;dbHost=/dbHost='"${DB_HOST}"'/' /etc/murmurd/murmurd.ini \
-    && sed -i 's/^;dbPort=/dbPort='"${DB_PORT}"'/' /etc/murmurd/murmurd.ini
+    && sed -i 's/;dbDriver=QMYSQL/dbDriver='"${DB_DRIVER}"'/' /etc/murmurd/murmurd.ini \
+    && sed -i 's/;dbUsername=/dbUsername='"${DB_USER}"'/' /etc/murmurd/murmurd.ini \
+    && sed -i 's/;dbPassword=/dbPassword='"${DB_PASSWORD}"'/' /etc/murmurd/murmurd.ini \
+    && sed -i 's/;dbHost=/dbHost='"${DB_HOST}"'/' /etc/murmurd/murmurd.ini \
+    && sed -i 's/;dbPort=/dbPort='"${DB_PORT}"'/' /etc/murmurd/murmurd.ini \
+	&& sed -i 's/serverpassword=/serverpassword='"${SERVER_PASSWORD}"'/' /etc/murmurd/murmurd.ini
+
 
 USER murmurd
 
-CMD /usr/bin/murmurd -v -fg -ini /etc/murmurd/murmurd.ini
+CMD /usr/bin/murmurd -v -fg -ini /etc/murmurd/murmurd.ini -supw ${SUPER_USER_PASSWORD} && /usr/bin/murmurd -v -fg -ini /etc/murmurd/murmurd.ini

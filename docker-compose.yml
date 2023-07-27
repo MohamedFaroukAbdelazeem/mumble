@@ -11,6 +11,8 @@ services:
         - DB_PASSWORD=${DB_PASSWORD}
         - DB_HOST=${DB_HOST}
         - DB_PORT=${DB_PORT}
+        - SERVER_PASSWORD=${SERVER_PASSWORD}
+        - SUPER_USER_PASSWORD=${SUPER_USER_PASSWORD}
     restart: unless-stopped
     depends_on:
       - mysql
@@ -21,7 +23,7 @@ services:
       - 64738:64738/udp
       - 50051:50051
     volumes:
-      - mumble_data:/data
+      - mumble_data:/etc/murmurd
 
   mysql:
     image: mysql:8
