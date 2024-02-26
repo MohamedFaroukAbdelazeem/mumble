@@ -55,10 +55,10 @@ struct Shortcut {
 };
 
 struct ChannelTarget {
-	int channelID = Channel::ROOT_ID;
+	unsigned int channelID = Channel::ROOT_ID;
 
 	ChannelTarget() = default;
-	ChannelTarget(int id) : channelID(id) {}
+	ChannelTarget(unsigned int id) : channelID(id) {}
 
 	friend bool operator==(const ChannelTarget &lhs, const ChannelTarget &rhs);
 	friend bool operator<(const ChannelTarget &lhs, const ChannelTarget &rhs);
@@ -226,6 +226,7 @@ struct Settings {
 	QString qsTxAudioCueOff = cqsDefaultPushClickOn;
 
 	bool bTxMuteCue     = true;
+	bool muteCueShown   = false;
 	QString qsTxMuteCue = cqsDefaultMuteCue;
 
 	bool bTransmitPosition         = false;
@@ -369,6 +370,7 @@ struct Settings {
 
 	QPoint qpTalkingUI_Position              = UNSPECIFIED_POSITION;
 	bool bShowTalkingUI                      = false;
+	bool talkingUI_UsersAlwaysVisible        = false;
 	bool bTalkingUI_LocalUserStaysVisible    = false;
 	bool bTalkingUI_AbbreviateChannelNames   = true;
 	bool bTalkingUI_AbbreviateCurrentChannel = false;
